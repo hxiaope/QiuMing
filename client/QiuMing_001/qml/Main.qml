@@ -2,6 +2,7 @@ import VPlayApps 1.0
 
 import QtQuick 2.0
 import QtQuick.Layouts 1.1
+import Qt.WebSockets 1.0
 
 import QtQuick.Dialogs 1.2 as ZZZ
 
@@ -20,10 +21,12 @@ App {
 
     // ZZZ.ColorDialog {  visible: true }
 
-    property color color: "#434343"
-
     // Theme {}
     onInitTheme: {
+
+//        Theme.platform = "windows";
+        console.log(Theme.platform)
+
         // 设置主字体颜色
         Theme.colors.textColor = "#ababab";
         // 设置应用背景颜色
@@ -39,41 +42,55 @@ App {
         Theme.navigationAppDrawer.textColor = "#ababab";
         Theme.navigationAppDrawer.activeTextColor = "#b06176"
         Theme.listItem.activeTextColor = "#b06176";
+        // Theme.listItem.backgroundColor = "transparent";
+        Theme.listItem.backgroundColor = "#343434";
         // activeTextColor
 
-//        // listItem ThemeSimpleRow
-//        Theme.listItem.textColor = "#ababab";
-//        // Theme.listItem.activeTextColor = "#ababab";
-//        // 详细的文字要白一点
-//        Theme.listItem.detailTextColor = "#b06176";
-//        Theme.listItem.backgroundColor = "#343434";
-//        Theme.listItem.selectedBackgroundColor = "#5c5c5c";
-//        Theme.listItem.dividerColor = "#434343";
+        //        // listItem ThemeSimpleRow
+        //        Theme.listItem.textColor = "#ababab";
+        //        // Theme.listItem.activeTextColor = "#ababab";
+        //        // 详细的文字要白一点
+        //        Theme.listItem.detailTextColor = "#b06176";
+        //        Theme.listItem.backgroundColor = "#343434";
+        //        Theme.listItem.selectedBackgroundColor = "#5c5c5c";
+        //        Theme.listItem.dividerColor = "#434343";
 
+        // 输入框
+        Theme.colors.inputCursorColor = "#b06176";
+
+        // 选项栏
+        Theme.tabBar.titleColor = "#b06176"; //"#ababab";
+        Theme.tabBar.backgroundColor = "#343434";
+        Theme.tabBar.dividerColor = "#434343";
     }
 
     property alias mainStack: mainNavigationStack
-    property alias mainNavigation: mainNavigation
+    property alias mainNavigation: mainPage.mainNavigation
     property alias lazyer: lazyer
     property alias userEntity: userEntity
+    property alias socket: socket
 
-    UserEntity {
-        id: userEntity
-        property bool isLogin: false
-        property string jsessionid: "xxxx"
-        username: "我也是大魔王好不好"
-        password: ""
-        pickname: ""
-        age: 0
-        address: ""
-    }
+    signal loginSuccess()
+    signal logoutSuccess()
+
+    UserEntity { id: userEntity }
 
     Lazyer { id: lazyer }
 
+    Socket { id: socket }
+
+    Component {
+        id: userLoginPage
+        // socket
+        UserLoginPage { onLoginSuccess: app.loginSuccess(); }
+    }
+
     Component.onCompleted: {
-        //        if(!userEntity.isLogin) {
-        //            mainNavigationStack.push(userLoginPage)
-        //        }
+        mainNavigationStack.push(userLoginPage);
+
+        lazyer.lazyDo(250, function() {
+            socket.active = true;
+        });
     }
 
     NavigationStack {
@@ -81,105 +98,8 @@ App {
 
         splitView: false
 
-        Page {
+        MainPage {
             id: mainPage
-            titleItem: Row {
-                spacing: dp(6)
-
-                //                Image {
-                //                  anchors.verticalCenter: parent.verticalCenter
-                //                  height: titleText.height
-                //                  fillMode: Image.PreserveAspectFit
-                //                  source: "../assets/vplay-logo.png"
-                //                }
-
-                AppText {
-                    id: titleText
-                    anchors.verticalCenter: parent.verticalCenter
-                    text:  userEntity.username
-                    font.bold: true
-                    font.family: Theme.boldFont.name
-                    font.pixelSize: dp(Theme.navigationBar.titleTextSize)
-                    // color: "orange"
-                }
-            } // titleItem
-
-            Component {
-                id: userLoginPage
-                UserLoginPage {  }
-            }
-
-            Component {
-                id: userCenterPage
-                UserCenterPage { }
-            }
-
-            Navigation {
-                id: mainNavigation
-                navigationMode: navigationModeDrawer
-
-                // drawer header
-                headerView: Item {
-                    // 用户中心
-                    width: parent.width
-                    height: parent.width * 0.8
-
-                    AppImage {
-                        anchors.fill: parent
-                        defaultSource: "../assets/vplay-logo.png"
-                        source: "../assets/drawer-head-background.jpg"
-                    }
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: dp(16)
-                        AnimatedImage {
-                            source: "../assets/loadTV.gif"
-                        }
-                        AppText {
-                            text: userEntity.username
-                        }
-                    }
-
-                    RippleMouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            mainNavigationStack.push(userCenterPage);
-                        }
-                    }
-                } // headerView
-
-                NavigationItem {
-                    title: qsTr("首页")
-                    icon: IconType.home
-                    IndexPage { }
-                }
-
-                NavigationItem {
-                    title: qsTr("我的收藏")
-                    icon: IconType.star
-                    FavoritesPage { }
-                }
-
-                NavigationItem {
-                    title: qsTr("关注的人")
-                    icon: IconType.users
-                    FocusPage { }
-                }
-
-                NavigationItem {
-                    title: qsTr("关于")
-                    icon: IconType.info
-                    AboutPage {  }
-                }
-
-                NavigationItem {
-                    title: qsTr("设置")
-                    icon: IconType.tachometer
-                    SettingsPage { }
-                }
-            } // mainNavigation
-
         } // mainPage
 
     } // mainStack
